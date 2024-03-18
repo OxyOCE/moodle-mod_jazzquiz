@@ -28,9 +28,9 @@ namespace mod_jazzquiz\bank;
 
 defined('MOODLE_INTERNAL') || die();
 
-use \core_question\bank\search\tag_condition as tag_condition;
-use \core_question\bank\search\hidden_condition as hidden_condition;
-use \core_question\bank\search\category_condition as category_condition;
+use \qbank_tagquestion\tag_condition as tag_condition;
+use \qbank_deletequestion\hidden_condition as hidden_condition;
+use \qbank_managecategories\category_condition as category_condition;
 
 /**
  * Subclass of the question bank view class to change the way it works/looks
@@ -54,7 +54,7 @@ class jazzquiz_question_bank_view extends \core_question\local\bank\view {
             'core_question\\local\\bank\\checkbox_column',
             'qbank_viewquestiontype\\question_type_column',
             'qbank_viewquestionname\\viewquestionname_column_helper',
-            'qbank_previewquestion\\preview_action_column',
+            'core_question\\local\\bank\\edit_menu_column',
         ];
 
         // Needs to check qbshowtext parameter manually from baseurl in order
@@ -88,30 +88,30 @@ class jazzquiz_question_bank_view extends \core_question\local\bank\view {
      * @param array $pagevars
      * @throws \coding_exception
      */
-    public function display($pagevars, $tabname): void {
-        $page = $pagevars['qpage'];
-        $perpage = $pagevars['qperpage'];
-        $cat = $pagevars['cat'];
-        $recurse = $pagevars['recurse'];
-        $showhidden = $pagevars['showhidden'];
-        $showquestiontext = $pagevars['qbshowtext'];
+    public function display(): void {
+        $page = $this->pagevars['qpage'];
+        $perpage = $this->pagevars['qperpage'];
+        $cat = $this->pagevars['cat'];
+        $recurse = $this->pagevars['recurse'];
+        $showhidden = $this->pagevars['showhidden'];
+        $showquestiontext = $this->pagevars['qbshowtext'];
         $tagids = [];
-        if (!empty($pagevars['qtagids'])) {
-            $tagids = $pagevars['qtagids'];
+        if (!empty($this->pagevars['qtagids'])) {
+            $tagids = $this->pagevars['qtagids'];
         }
 
         global $PAGE;
 
-        $contexts = $this->contexts->having_one_edit_tab_cap($tabname);
+        $contexts = $this->contexts->having_one_edit_tab_cap('editq');
         list($categoryid, $contextid) = explode(',', $cat);
         $catcontext = \context::instance_by_id($contextid);
         $thiscontext = $this->get_most_specific_context();
 
         // Category selection form.
         $this->display_question_bank_header();
-        array_unshift($this->searchconditions, new tag_condition([$catcontext, $thiscontext], $tagids));
-        array_unshift($this->searchconditions, new hidden_condition(!$showhidden));
-        array_unshift($this->searchconditions, new category_condition($cat, $recurse, $contexts, $this->baseurl, $this->course));
+        array_unshift($this->searchconditions, new tag_condition($this));
+        array_unshift($this->searchconditions, new hidden_condition($this));
+        array_unshift($this->searchconditions, new category_condition($this));
         $this->display_options_form($showquestiontext, '/mod/jazzquiz/edit.php');
 
         // Continues with list of questions.
@@ -208,6 +208,10 @@ class jazzquiz_question_bank_view extends \core_question\local\bank\view {
 
         // Add some top margin to the table (not viable via CSS).
         echo '<br><br>';
+    }
+
+    public function get_question_action(): array {
+        return [new \qbank_previewquestion\preview_action($this)];
     }
 
 }

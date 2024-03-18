@@ -73,8 +73,8 @@ function get_qbank_view(
     ];
     // Capture question bank display in buffer to have the renderer render output.
     ob_start();
-    $questionbank = new bank\jazzquiz_question_bank_view($contexts, $url, $jazzquiz->course, $jazzquiz->cm);
-    $questionbank->display($newpagevars, 'editq');
+    $questionbank = new bank\jazzquiz_question_bank_view($contexts, $url, $jazzquiz->course, $jazzquiz->cm, $newpagevars);
+    $questionbank->display();
     return ob_get_clean();
 }
 
